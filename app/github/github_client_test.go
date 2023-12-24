@@ -9,7 +9,7 @@ import (
 	"testing"
 )
 
-func TestGetGithubReleases(t *testing.T) {
+func TestGetReleases(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		resp := readFileContent(t, "testdata/releases.json")
 		w.Write(resp)

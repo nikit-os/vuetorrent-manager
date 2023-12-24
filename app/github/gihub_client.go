@@ -70,7 +70,7 @@ func (github *DefaultClient) GetReleaseByTag(tag string) (Release, error) {
 	var releasesUrl = fmt.Sprintf("%s/%s/%s", github.BaseUrl, "repos/WDaan/VueTorrent/releases/tags", tag)
 	req, err := http.NewRequest("GET", releasesUrl, nil)
 	if err != nil {
-		return Release{}, fmt.Errorf("failed to create get release by tag request. %s", err.Error())
+		return Release{}, fmt.Errorf("failed to create 'get release by tag' request. %s", err.Error())
 	}
 
 	req.Header.Add("Accept", "application/vnd.github+json")
@@ -82,15 +82,20 @@ func (github *DefaultClient) GetReleaseByTag(tag string) (Release, error) {
 	}
 	defer resp.Body.Close()
 
-	releaseBody, err := io.ReadAll(resp.Body)
+	responseBody, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return Release{}, fmt.Errorf("failed to read release by tag responce. %s", err.Error())
+		return Release{}, fmt.Errorf("failed to read release by tag response. %s", err.Error())
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		err = fmt.Errorf("failed to get release by tag. http code %d, http body %s", resp.StatusCode, string(responseBody))
+		return Release{}, err
 	}
 
 	var githubRelease Release
-	err = json.Unmarshal(releaseBody, &githubRelease)
+	err = json.Unmarshal(responseBody, &githubRelease)
 	if err != nil {
-		return Release{}, fmt.Errorf("failed to decode release by tag. response: [%s]. %s", string(releaseBody), err.Error())
+		return Release{}, fmt.Errorf("failed to decode release by tag. response: [%s]. %s", string(responseBody), err.Error())
 	}
 
 	return githubRelease, nil
