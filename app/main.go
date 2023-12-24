@@ -11,7 +11,7 @@ type Opts struct {
 	InstallCmd cmd.InstallCommand `command:"install"`
 	InfoCmd cmd.InfoCommand `command:"info"`
 	ListCmd cmd.ListCommand `command:"list"`
-	// revision - print app version and commit hash
+	RevisionCmd cmd.RevisionCommand `command:"revision"`
 }
 
 func main() {
