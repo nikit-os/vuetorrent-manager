@@ -4,6 +4,7 @@ import (
 	"archive/zip"
 	"fmt"
 	"io"
+	"log"
 	"n1kit0s/vt-manager/app/github"
 	"net/http"
 	"os"
@@ -109,7 +110,7 @@ func (mng *vtManager) Download(release VueTorrentRelease, outputDir string) (fil
 	filePath = filepath.Join(outputDir, filename)
 
 	if _, err := os.Stat(filePath); err == nil {
-		fmt.Printf("%s already exists. skipping download \n", filePath)
+		log.Printf("[INFO] %s already exists here %s. skipping download", filename, filePath)
 		return filePath, nil
 	}
 
@@ -134,12 +135,12 @@ func (mng *vtManager) Download(release VueTorrentRelease, outputDir string) (fil
 }
 
 func (mng *vtManager) Unzip(filePath string, outputDir string, version string) (err error) {
-	fmt.Printf("Extracting %s into %s \n", filePath, outputDir)
+	log.Printf("[INFO] Extracting %s into %s \n", filePath, outputDir)
 
 	_, err = os.Stat(outputDir)
 	if err == nil {
 		prevOutputDir := fmt.Sprintf(outputDir + "-prev")
-		fmt.Printf("Renaming output dir to %s\n", prevOutputDir)
+		log.Printf("[INFO] Renaming old output dir to %s", prevOutputDir)
 		os.Rename(outputDir, prevOutputDir)
 		defer os.RemoveAll(prevOutputDir) // TODO: move to bottom. if any error this should not be executed
 	}
@@ -147,7 +148,7 @@ func (mng *vtManager) Unzip(filePath string, outputDir string, version string) (
 	_, err = os.Open(outputDir)
 	if err != nil {
 		if os.IsNotExist(err) {
-			fmt.Printf("Output direcrory %s doesn't exists. Creating...\n", outputDir)
+			log.Printf("[INFO] Output direcrory %s doesn't exists. Creating...", outputDir)
 			os.MkdirAll(outputDir, os.ModePerm)
 		}
 	}
@@ -166,14 +167,14 @@ func (mng *vtManager) Unzip(filePath string, outputDir string, version string) (
 		}
 
 		filePath = filepath.Join(filepath.Clean(outputDir), fileName)
-		fmt.Println("unzipping file ", filePath)
+		log.Println("[INFO] unzipping file ", filePath)
 
 		if !versionFileExists && fileName == "version.txt" {
 			versionFileExists = true
 		}
 
 		if file.FileInfo().IsDir() {
-			fmt.Printf("Creating folder %s \n", filePath)
+			log.Printf("[INFO] Creating folder %s", filePath)
 			os.MkdirAll(filePath, os.ModePerm)
 			continue
 		}
@@ -201,7 +202,7 @@ func (mng *vtManager) Unzip(filePath string, outputDir string, version string) (
 	}
 
 	if !versionFileExists {
-		fmt.Println("Creating missed version.txt file")
+		log.Println("[INFO] Creating missed version.txt file")
 		filePath = filepath.Join(filepath.Clean(outputDir), "version.txt")
 		versionData := []byte(version)
 		err := os.WriteFile(filePath, versionData, 0777)

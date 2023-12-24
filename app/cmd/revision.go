@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"log"
 	"fmt"
 	"runtime/debug"
 )
@@ -8,7 +9,7 @@ import (
 type RevisionCommand struct {}
 
 func (c *RevisionCommand) Execute(args []string) error {
-	fmt.Printf("Revision: %s\n", revision())
+	log.Printf("[INFO] Revision: %s", revision())
 	return nil
 }
 

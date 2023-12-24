@@ -1,10 +1,10 @@
 package cmd
 
 import (
-	"fmt"
 	"n1kit0s/vt-manager/app/github"
 	"n1kit0s/vt-manager/app/vuetorrent"
 	"os"
+	"log"
 )
 
 type InstallCommand struct {
@@ -14,7 +14,7 @@ type InstallCommand struct {
 }
 
 func (c *InstallCommand) Execute(args []string) error {
-	fmt.Println("Start installing")
+	log.Println("[INFO] Start installing")
 	var githubClient = github.NewClient(c.GithubApiKey)
 	var vtManager = vuetorrent.NewVTManager(githubClient)
 
@@ -22,7 +22,6 @@ func (c *InstallCommand) Execute(args []string) error {
 	if c.Version == "" {
 		release, err := vtManager.GetLatestVuetorrentRelease()
 		if err != nil {
-			fmt.Printf("Failed to retrive latest vuetorrent release. Error: %s \n", err.Error())
 			return err
 		}
 		vtRelease = release
@@ -30,23 +29,20 @@ func (c *InstallCommand) Execute(args []string) error {
 		tag := vuetorrent.MakeTagName(c.Version)
 		release, err := vtManager.GetVuetorrentRelease(tag)
 		if err != nil {
-			fmt.Printf("Failed to retrive vuetorrent release %s. Error: %s \n", tag, err.Error())
 			return err
 		}
 		vtRelease = release
 	}
 
-	fmt.Printf("Start downloading %v \n", vtRelease)
+	log.Printf("[INFO] Start downloading %v", vtRelease)
 	filePath, err := vtManager.Download(vtRelease, os.TempDir())
 	if err != nil {
-		fmt.Printf("Failed to download latest vuetorrent release: Error: %s \n", err.Error())
 		return err
 	}
-	fmt.Printf("Downloaded latest release into %s \n", filePath)
+	log.Printf("[INFO] Downloaded latest release into %s", filePath)
 
 	err = vtManager.Unzip(filePath, c.Directory, vtRelease.Version)
 	if err != nil {
-		fmt.Printf("Failed to unzip vuetorrent release. Error: %s \n", err.Error())
 		return err
 	}
 
