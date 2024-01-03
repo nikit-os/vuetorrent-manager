@@ -10,17 +10,10 @@ import (
 )
 
 func TestGetReleases(t *testing.T) {
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		resp := readFileContent(t, "testdata/releases.json")
-		w.Write(resp)
-	}))
+	server := mockServerWithResponce(t, "testdata/releases.json")
 	defer server.Close()
 
-	githubClient := DefaultClient{
-		ApiKey:  "foo",
-		Client:  server.Client(),
-		BaseUrl: server.URL,
-	}
+	githubClient := createGithubClient(server)
 
 	releases, err := githubClient.GetReleases()
 	if err != nil {
@@ -61,6 +54,47 @@ func TestGetReleases(t *testing.T) {
 		if !reflect.DeepEqual(receivedRelease, expectedReleases[i]) {
 			t.Errorf("\nGot: %+v \nExp: %+v", receivedRelease, expectedReleases[i])
 		}
+	}
+}
+
+func TestGetReleaseByTag(t *testing.T) {
+	server := mockServerWithResponce(t, "testdata/release_by_tag.json")
+	defer server.Close()
+
+	githubClient := createGithubClient(server)
+
+	receivedRelease, err := githubClient.GetReleaseByTag("v2.3.0")
+	if err != nil {
+		t.Error(err.Error())
+	}
+
+	expectedRelease := Release{
+		TagName: "v2.3.0",
+		Assets: []Asset{
+			{
+				Name:        "vuetorrent.zip",
+				DownloadUrl: "https://github.com/WDaan/VueTorrent/releases/download/v2.3.0/vuetorrent.zip",
+			},
+		},
+	}
+
+	if !reflect.DeepEqual(receivedRelease, expectedRelease) {
+		t.Errorf("\nGot: %+v \nExp: %+v", receivedRelease, expectedRelease)
+	}
+}
+
+func mockServerWithResponce(t *testing.T, fileWithResponce string) *httptest.Server {
+	return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		resp := readFileContent(t, fileWithResponce)
+		w.Write(resp)
+	}))
+}
+
+func createGithubClient(server *httptest.Server) Client {
+	return &DefaultClient{
+		ApiKey:  "foo",
+		Client:  server.Client(),
+		BaseUrl: server.URL,
 	}
 }
 
