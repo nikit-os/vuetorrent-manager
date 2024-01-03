@@ -18,24 +18,11 @@ type VueTorrentRelease struct {
 	DownloadUrl string
 }
 
-type VTDownloader interface {
+type VTManager interface {
 	Download(release VueTorrentRelease, outputDir string) (filePath string, err error)
-}
-
-type VTUpdater interface {
-	Update(newRelease VueTorrentRelease, oldReleaseDir string) error
-}
-
-type VTReleaseRetriever interface {
 	GetLatestVuetorrentRelease() (VueTorrentRelease, error)
 	GetVuetorrentRelease(tag string) (VueTorrentRelease, error)
 	GetAllReleases() ([]VueTorrentRelease, error)
-}
-
-type VTManager interface {
-	VTDownloader
-	// VTUpdater
-	VTReleaseRetriever
 	Unzip(filePath string, outputDir string, version string) (err error)
 }
 
@@ -167,14 +154,11 @@ func (mng *vtManager) Unzip(filePath string, outputDir string, version string) (
 		}
 
 		filePath = filepath.Join(filepath.Clean(outputDir), fileName)
-		log.Println("[INFO] unzipping file ", filePath)
-
 		if !versionFileExists && fileName == "version.txt" {
 			versionFileExists = true
 		}
 
 		if file.FileInfo().IsDir() {
-			log.Printf("[INFO] Creating folder %s", filePath)
 			os.MkdirAll(filePath, os.ModePerm)
 			continue
 		}
