@@ -121,18 +121,12 @@ func (mng *vtManager) Download(release VueTorrentRelease, outputDir string) (fil
 	return filePath, nil
 }
 
-func (mng *vtManager) Unzip(filePath string, outputDir string, version string) (err error) {
+func (mng *vtManager) Unzip(filePath string, outputDir string, version string) error {
 	log.Printf("[INFO] Extracting %s into %s \n", filePath, outputDir)
 
-	_, err = os.Stat(outputDir)
-	if err == nil {
-		prevOutputDir := fmt.Sprintf(outputDir + "-prev")
-		log.Printf("[INFO] Renaming old output dir to %s", prevOutputDir)
-		os.Rename(outputDir, prevOutputDir)
-		defer os.RemoveAll(prevOutputDir) // TODO: move to bottom. if any error this should not be executed
-	}
+	var backupedDir, backupErr = backupPreviousVersion(outputDir)
 
-	_, err = os.Open(outputDir)
+	_, err := os.Open(outputDir)
 	if err != nil {
 		if os.IsNotExist(err) {
 			log.Printf("[INFO] Output direcrory %s doesn't exists. Creating...", outputDir)
@@ -196,6 +190,11 @@ func (mng *vtManager) Unzip(filePath string, outputDir string, version string) (
 
 	}
 
+	if backupErr == nil {
+		os.RemoveAll(backupedDir)
+		log.Printf("[INFO] Removed old dir %s", backupedDir)
+	}
+
 	return nil
 }
 
@@ -220,4 +219,20 @@ func GetVersion(vtDirectory string) (string, error) {
 	}
 
 	return string(fileBytes), nil
+}
+
+func backupPreviousVersion(outputDir string) (string, error) {
+	_, err := os.Stat(outputDir)
+	var backupedDir = ""
+	if err == nil {
+		previousVersion, err := GetVersion(outputDir)
+		if err != nil {
+			log.Printf("[WARN] Previous version is unknown. Err: %s", err.Error())
+		}
+		backupedDir = fmt.Sprintf(outputDir + "-" + previousVersion)
+		log.Printf("[INFO] Renaming old output dir to %s", backupedDir)
+		os.Rename(outputDir, backupedDir)
+	}
+
+	return backupedDir, err
 }
