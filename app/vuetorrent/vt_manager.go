@@ -19,11 +19,10 @@ type VueTorrentRelease struct {
 }
 
 type VTManager interface {
-	Download(release VueTorrentRelease, outputDir string) (filePath string, err error)
 	GetLatestVuetorrentRelease() (VueTorrentRelease, error)
 	GetVuetorrentRelease(tag string) (VueTorrentRelease, error)
 	GetAllReleases() ([]VueTorrentRelease, error)
-	Unzip(filePath string, outputDir string, version string) (err error)
+	Install(release VueTorrentRelease, outputDir string) error
 }
 
 type vtManager struct {
@@ -92,7 +91,35 @@ func (mng *vtManager) GetAllReleases() ([]VueTorrentRelease, error) {
 	return vtReleases, nil
 }
 
-func (mng *vtManager) Download(release VueTorrentRelease, outputDir string) (filePath string, err error) {
+func (mng *vtManager) Install(release VueTorrentRelease, outputDir string) error {
+	log.Printf("[INFO] Start downloading %v", release)
+	filePath, err := mng.download(release, os.TempDir())
+	if err != nil {
+		return err
+	}
+	log.Printf("[INFO] Downloaded release into %s", filePath)
+
+	var backupedDir, backupErr = backupPreviousVersion(outputDir)
+
+	err = mng.unzip(filePath, outputDir, release.Version)
+	if err != nil {
+		return err
+	}
+
+	if backupErr == nil {
+		os.RemoveAll(backupedDir)
+		log.Printf("[INFO] Removed old dir %s", backupedDir)
+	}
+
+	err = createVersionFile(release.Version, outputDir)
+	if err != nil {
+		log.Printf("[WARN] Can't create version file. Error: %s", err.Error())
+	}
+
+	return nil
+}
+
+func (mng *vtManager) download(release VueTorrentRelease, outputDir string) (filePath string, err error) {
 	var filename = fmt.Sprintf("vuetorrent-%s.zip", release.Version)
 	filePath = filepath.Join(outputDir, filename)
 
@@ -121,10 +148,8 @@ func (mng *vtManager) Download(release VueTorrentRelease, outputDir string) (fil
 	return filePath, nil
 }
 
-func (mng *vtManager) Unzip(filePath string, outputDir string, version string) error {
+func (mng *vtManager) unzip(filePath string, outputDir string, version string) error {
 	log.Printf("[INFO] Extracting %s into %s \n", filePath, outputDir)
-
-	var backupedDir, backupErr = backupPreviousVersion(outputDir)
 
 	_, err := os.Open(outputDir)
 	if err != nil {
@@ -140,7 +165,6 @@ func (mng *vtManager) Unzip(filePath string, outputDir string, version string) e
 	}
 	defer archive.Close()
 
-	var versionFileExists = false
 	for _, file := range archive.File {
 		fileName, _ := strings.CutPrefix(file.Name, "vuetorrent/")
 		if fileName == "" {
@@ -148,9 +172,6 @@ func (mng *vtManager) Unzip(filePath string, outputDir string, version string) e
 		}
 
 		filePath = filepath.Join(filepath.Clean(outputDir), fileName)
-		if !versionFileExists && fileName == "version.txt" {
-			versionFileExists = true
-		}
 
 		if file.FileInfo().IsDir() {
 			os.MkdirAll(filePath, os.ModePerm)
@@ -179,22 +200,23 @@ func (mng *vtManager) Unzip(filePath string, outputDir string, version string) e
 		fileInArchive.Close()
 	}
 
-	if !versionFileExists {
-		log.Println("[INFO] Creating missed version.txt file")
-		filePath = filepath.Join(filepath.Clean(outputDir), "version.txt")
-		versionData := []byte(version)
-		err := os.WriteFile(filePath, versionData, 0777)
-		if err != nil {
-			return err
-		}
+	return nil
+}
 
+func createVersionFile(version string, outputDir string) error {
+	filePath := filepath.Join(filepath.Clean(outputDir), "version.txt")
+
+	if _, err := os.Stat(filePath); err == nil {
+		log.Printf("[INFO] %s already exists", filePath)
+		return nil
 	}
 
-	if backupErr == nil {
-		os.RemoveAll(backupedDir)
-		log.Printf("[INFO] Removed old dir %s", backupedDir)
+	log.Println("[INFO] Creating missed version.txt file")
+	versionData := []byte(version)
+	err := os.WriteFile(filePath, versionData, 0777)
+	if err != nil {
+		return err
 	}
-
 	return nil
 }
 

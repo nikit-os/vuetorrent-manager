@@ -1,10 +1,9 @@
 package cmd
 
 import (
+	"log"
 	"n1kit0s/vt-manager/app/github"
 	"n1kit0s/vt-manager/app/vuetorrent"
-	"os"
-	"log"
 )
 
 type InstallCommand struct {
@@ -34,14 +33,7 @@ func (c *InstallCommand) Execute(args []string) error {
 		vtRelease = release
 	}
 
-	log.Printf("[INFO] Start downloading %v", vtRelease)
-	filePath, err := vtManager.Download(vtRelease, os.TempDir())
-	if err != nil {
-		return err
-	}
-	log.Printf("[INFO] Downloaded latest release into %s", filePath)
-
-	err = vtManager.Unzip(filePath, c.Directory, vtRelease.Version)
+	err := vtManager.Install(vtRelease, c.Directory)
 	if err != nil {
 		return err
 	}
