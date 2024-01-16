@@ -93,7 +93,7 @@ func (mng *vtManager) GetAllReleases() ([]VueTorrentRelease, error) {
 
 func (mng *vtManager) Install(release VueTorrentRelease, outputDir string) error {
 	log.Printf("[INFO] Start downloading %v", release)
-	filePath, err := mng.download(release, os.TempDir())
+	filePath, err := download(release, os.TempDir())
 	if err != nil {
 		return err
 	}
@@ -101,7 +101,7 @@ func (mng *vtManager) Install(release VueTorrentRelease, outputDir string) error
 
 	var backupedDir, backupErr = backupPreviousVersion(outputDir)
 
-	err = mng.unzip(filePath, outputDir, release.Version)
+	err = unzip(filePath, outputDir, release.Version)
 	if err != nil {
 		return err
 	}
@@ -119,7 +119,7 @@ func (mng *vtManager) Install(release VueTorrentRelease, outputDir string) error
 	return nil
 }
 
-func (mng *vtManager) download(release VueTorrentRelease, outputDir string) (filePath string, err error) {
+func download(release VueTorrentRelease, outputDir string) (filePath string, err error) {
 	var filename = fmt.Sprintf("vuetorrent-%s.zip", release.Version)
 	filePath = filepath.Join(outputDir, filename)
 
@@ -148,7 +148,7 @@ func (mng *vtManager) download(release VueTorrentRelease, outputDir string) (fil
 	return filePath, nil
 }
 
-func (mng *vtManager) unzip(filePath string, outputDir string, version string) error {
+func unzip(filePath string, outputDir string, version string) error {
 	log.Printf("[INFO] Extracting %s into %s \n", filePath, outputDir)
 
 	_, err := os.Open(outputDir)
