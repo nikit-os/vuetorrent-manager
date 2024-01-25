@@ -1,0 +1,30 @@
+name: Release
+
+on: 
+  release:
+    types:
+      - published
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: '1.21'
+
+      - name: Test
+        run: make test
+
+      - name: Build
+        run: make VERSION=${{github.ref_name}} build
+
+      - name: Release 
+        uses: AButler/upload-release-assets@v3.0
+        with:
+          files: "./bin/vt-manager-*"
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+
