@@ -26,5 +26,5 @@ jobs:
         uses: AButler/upload-release-assets@v3.0
         with:
           files: "./bin/vt-manager-*"
-          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          repo-token: ${{secrets.GITHUB_TOKEN}}
 

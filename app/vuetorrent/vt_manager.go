@@ -93,15 +93,16 @@ func (mng *vtManager) GetAllReleases() ([]VueTorrentRelease, error) {
 
 func (mng *vtManager) Install(release VueTorrentRelease, outputDir string) error {
 	log.Printf("[INFO] Start downloading %v", release)
+	cleanedOutputDir := filepath.Clean(outputDir)
 	filePath, err := download(release, os.TempDir())
 	if err != nil {
 		return err
 	}
 	log.Printf("[INFO] Downloaded release into %s", filePath)
 
-	var backupedDir, backupErr = backupPreviousVersion(outputDir)
+	var backupedDir, backupErr = backupPreviousVersion(cleanedOutputDir)
 
-	err = unzip(filePath, outputDir, release.Version)
+	err = unzip(filePath, cleanedOutputDir, release.Version)
 	if err != nil {
 		return err
 	}
@@ -111,7 +112,7 @@ func (mng *vtManager) Install(release VueTorrentRelease, outputDir string) error
 		log.Printf("[INFO] Removed old dir %s", backupedDir)
 	}
 
-	err = createVersionFile(release.Version, outputDir)
+	err = createVersionFile(release.Version, cleanedOutputDir)
 	if err != nil {
 		log.Printf("[WARN] Can't create version file. Error: %s", err.Error())
 	}
