@@ -1,3 +1,5 @@
+VERSION = $(shell git describe --tags --always --dirty)
+
 .PHONY: run
 run:
 	go run ./app
@@ -9,5 +11,5 @@ test:
 .PHONY: build
 build:
 	@echo 'Building ...'
-	go build -v -ldflags="-s -w" -o=./bin/vt-manager ./app
-	GOOS=linux GOARCH=amd64 go build -v -ldflags="-s -w" -o=./bin/linux_amd64/vt-manager-amd64 ./app
+	GOOS=darwin GOARCH=arm64 go build -v -ldflags="-s -w -X n1kit0s/vt-manager/app/cmd.version=${VERSION}" -o=./bin/vt-manager-arm64-${VERSION} ./app
+	GOOS=linux GOARCH=amd64 go build -v -ldflags="-s -w -X n1kit0s/vt-manager/app/cmd.version=${VERSION}" -o=./bin/vt-manager-amd64-${VERSION} ./app
