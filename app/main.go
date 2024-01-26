@@ -8,9 +8,9 @@ import (
 )
 
 type Opts struct {
-	InstallCmd cmd.InstallCommand `command:"install"`
-	InfoCmd cmd.InfoCommand `command:"info"`
-	ListCmd cmd.ListCommand `command:"list"`
+	InstallCmd  cmd.InstallCommand  `command:"install"`
+	InfoCmd     cmd.InfoCommand     `command:"info"`
+	ListCmd     cmd.ListCommand     `command:"list"`
 	RevisionCmd cmd.RevisionCommand `command:"revision"`
 }
 

@@ -4,7 +4,7 @@ import (
 	"log"
 )
 
-type RevisionCommand struct {}
+type RevisionCommand struct{}
 
 var version string
 

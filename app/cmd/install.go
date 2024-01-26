@@ -17,16 +17,16 @@ func (c *InstallCommand) Execute(args []string) error {
 	var githubClient = github.NewClient(c.GithubApiKey)
 	var vtManager = vuetorrent.NewVTManager(githubClient)
 
-	var vtRelease vuetorrent.VueTorrentRelease
+	var vtRelease vuetorrent.Release
 	if c.Version == "" {
-		release, err := vtManager.GetLatestVuetorrentRelease()
+		release, err := vtManager.GetLatestRelease()
 		if err != nil {
 			return err
 		}
 		vtRelease = release
 	} else {
 		tag := vuetorrent.MakeTagName(c.Version)
-		release, err := vtManager.GetVuetorrentRelease(tag)
+		release, err := vtManager.GetReleaseByTag(tag)
 		if err != nil {
 			return err
 		}

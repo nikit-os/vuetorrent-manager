@@ -1,41 +1,42 @@
 package vuetorrent
 
 import (
-	"archive/zip"
 	"fmt"
-	"io"
 	"log"
 	"n1kit0s/vt-manager/app/github"
-	"net/http"
 	"os"
 	"path"
 	"path/filepath"
 	"strings"
 )
 
-type VueTorrentRelease struct {
+type Release struct {
 	Version     string
 	DownloadUrl string
 }
 
 type VTManager interface {
-	GetLatestVuetorrentRelease() (VueTorrentRelease, error)
-	GetVuetorrentRelease(tag string) (VueTorrentRelease, error)
-	GetAllReleases() ([]VueTorrentRelease, error)
-	Install(release VueTorrentRelease, outputDir string) error
+	GetLatestRelease() (Release, error)
+	GetReleaseByTag(tag string) (Release, error)
+	GetAllReleases() ([]Release, error)
+	Install(release Release, outputDir string) error
 }
 
 type vtManager struct {
 	githubClient github.Client
+	unzipper     Unzipper
+	downloader   Downloader
 }
 
 func NewVTManager(githubClient github.Client) VTManager {
 	return &vtManager{
 		githubClient: githubClient,
+		unzipper:     DefaultUnzipper{},
+		downloader:   HttpDownloader{},
 	}
 }
 
-func convertToVuetorrentRelease(githubRelease github.Release) VueTorrentRelease {
+func convertToVuetorrentRelease(githubRelease github.Release) Release {
 	var version, _ = strings.CutPrefix(githubRelease.TagName, "v")
 
 	var downloadUrl string
@@ -46,16 +47,16 @@ func convertToVuetorrentRelease(githubRelease github.Release) VueTorrentRelease 
 		}
 	}
 
-	return VueTorrentRelease{
+	return Release{
 		Version:     version,
 		DownloadUrl: downloadUrl,
 	}
 }
 
-func (mng *vtManager) GetVuetorrentRelease(tag string) (VueTorrentRelease, error) {
+func (mng *vtManager) GetReleaseByTag(tag string) (Release, error) {
 	githubRelease, err := mng.githubClient.GetReleaseByTag(tag)
 	if err != nil {
-		return VueTorrentRelease{}, err
+		return Release{}, err
 	}
 
 	vtRelease := convertToVuetorrentRelease(githubRelease)
@@ -63,10 +64,10 @@ func (mng *vtManager) GetVuetorrentRelease(tag string) (VueTorrentRelease, error
 	return vtRelease, nil
 }
 
-func (mng *vtManager) GetLatestVuetorrentRelease() (VueTorrentRelease, error) {
+func (mng *vtManager) GetLatestRelease() (Release, error) {
 	githubReleases, err := mng.githubClient.GetReleases()
 	if err != nil {
-		return VueTorrentRelease{}, err
+		return Release{}, err
 	}
 
 	var latestRelease = githubReleases[0]
@@ -75,13 +76,13 @@ func (mng *vtManager) GetLatestVuetorrentRelease() (VueTorrentRelease, error) {
 	return vtRelease, nil
 }
 
-func (mng *vtManager) GetAllReleases() ([]VueTorrentRelease, error) {
+func (mng *vtManager) GetAllReleases() ([]Release, error) {
 	githubReleases, err := mng.githubClient.GetReleases()
 	if err != nil {
-		return []VueTorrentRelease{}, err
+		return []Release{}, err
 	}
 
-	var vtReleases []VueTorrentRelease
+	var vtReleases []Release
 
 	for _, githubRelease := range githubReleases {
 		vtRelease := convertToVuetorrentRelease(githubRelease)
@@ -91,10 +92,10 @@ func (mng *vtManager) GetAllReleases() ([]VueTorrentRelease, error) {
 	return vtReleases, nil
 }
 
-func (mng *vtManager) Install(release VueTorrentRelease, outputDir string) error {
+func (mng *vtManager) Install(release Release, outputDir string) error {
 	log.Printf("[INFO] Start downloading %v", release)
 	cleanedOutputDir := filepath.Clean(outputDir)
-	filePath, err := download(release, os.TempDir())
+	filePath, err := mng.downloader.Download(release, os.TempDir())
 	if err != nil {
 		return err
 	}
@@ -102,7 +103,7 @@ func (mng *vtManager) Install(release VueTorrentRelease, outputDir string) error
 
 	var backupedDir, backupErr = backupPreviousVersion(cleanedOutputDir)
 
-	err = unzip(filePath, cleanedOutputDir, release.Version)
+	err = mng.unzipper.Unzip(filePath, cleanedOutputDir, release.Version)
 	if err != nil {
 		return err
 	}
@@ -115,90 +116,6 @@ func (mng *vtManager) Install(release VueTorrentRelease, outputDir string) error
 	err = createVersionFile(release.Version, cleanedOutputDir)
 	if err != nil {
 		log.Printf("[WARN] Can't create version file. Error: %s", err.Error())
-	}
-
-	return nil
-}
-
-func download(release VueTorrentRelease, outputDir string) (filePath string, err error) {
-	var filename = fmt.Sprintf("vuetorrent-%s.zip", release.Version)
-	filePath = filepath.Join(outputDir, filename)
-
-	if _, err := os.Stat(filePath); err == nil {
-		log.Printf("[INFO] %s already exists here %s. skipping download", filename, filePath)
-		return filePath, nil
-	}
-
-	file, err := os.Create(filePath)
-	if err != nil {
-		return "", err
-	}
-	defer file.Close()
-
-	resp, err := http.Get(release.DownloadUrl)
-	if err != nil {
-		return "", err
-	}
-	defer resp.Body.Close()
-
-	_, err = io.Copy(file, resp.Body)
-	if err != nil {
-		return "", err
-	}
-
-	return filePath, nil
-}
-
-func unzip(filePath string, outputDir string, version string) error {
-	log.Printf("[INFO] Extracting %s into %s \n", filePath, outputDir)
-
-	_, err := os.Open(outputDir)
-	if err != nil {
-		if os.IsNotExist(err) {
-			log.Printf("[INFO] Output direcrory %s doesn't exists. Creating...", outputDir)
-			os.MkdirAll(outputDir, os.ModePerm)
-		}
-	}
-
-	archive, err := zip.OpenReader(filePath)
-	if err != nil {
-		return err
-	}
-	defer archive.Close()
-
-	for _, file := range archive.File {
-		fileName, _ := strings.CutPrefix(file.Name, "vuetorrent/")
-		if fileName == "" {
-			continue
-		}
-
-		filePath = filepath.Join(filepath.Clean(outputDir), fileName)
-
-		if file.FileInfo().IsDir() {
-			os.MkdirAll(filePath, os.ModePerm)
-			continue
-		}
-
-		if err := os.MkdirAll(filepath.Dir(filePath), os.ModePerm); err != nil {
-			return err
-		}
-
-		dstFile, err := os.OpenFile(filePath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, file.Mode())
-		if err != nil {
-			return err
-		}
-
-		fileInArchive, err := file.Open()
-		if err != nil {
-			return err
-		}
-
-		if _, err := io.Copy(dstFile, fileInArchive); err != nil {
-			return err
-		}
-
-		dstFile.Close()
-		fileInArchive.Close()
 	}
 
 	return nil

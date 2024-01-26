@@ -6,7 +6,7 @@ import (
 )
 
 type InfoCommand struct {
-	Directory    string `short:"d" long:"dir" required:"true" description:"VueTorrent directory"`
+	Directory string `short:"d" long:"dir" required:"true" description:"VueTorrent directory"`
 }
 
 func (c *InfoCommand) Execute(args []string) error {
