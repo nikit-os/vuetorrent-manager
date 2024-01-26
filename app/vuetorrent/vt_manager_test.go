@@ -2,6 +2,8 @@ package vuetorrent
 
 import (
 	"n1kit0s/vt-manager/app/github"
+	"os"
+	"path/filepath"
 	"testing"
 )
 
@@ -57,7 +59,7 @@ func TestGetLatestRelease(t *testing.T) {
 }
 
 func TestGetReleaseByTag(t *testing.T) {
-	// Setu
+	// Setup
 	githubClient := &mockGithubClient{}
 	vtManager := NewVTManager(githubClient)
 	expectedRelease := Release{
@@ -70,4 +72,51 @@ func TestGetReleaseByTag(t *testing.T) {
 	if release != expectedRelease {
 		t.Errorf("Actual: %+v | Expected: %+v", release, expectedRelease)
 	}
+}
+
+type mockDownloader struct{}
+
+func (m mockDownloader) Download(release Release, outputDir string) (filePath string, err error) {
+	return "/some/file/path", nil
+}
+
+type mockUnziper struct{}
+
+func (m mockUnziper) Unzip(filePath string, outputDir string) error {
+	return os.MkdirAll(outputDir, os.ModePerm)
+}
+
+func TestInstall(t *testing.T) {
+	// Setup
+	vtManager := vtManager{
+		githubClient: &mockGithubClient{},
+		downloader:   mockDownloader{},
+		unzipper:     mockUnziper{},
+	}
+
+	targetRelease := Release{
+		Version:     "1.1.1",
+		DownloadUrl: "http://localhost:9876/dw/vuetorrent-111.zip",
+	}
+
+	tempDir := t.TempDir()
+	outputDir := filepath.Join(tempDir, "vuetorrent")
+	expectedVersionFilePath := filepath.Join(outputDir, "version.txt")
+
+	// Run
+	err := vtManager.Install(targetRelease, outputDir)
+	if err != nil {
+		t.Fatalf("Installation failed. Error: %s", err.Error())
+	}
+
+	versionBytes, err := os.ReadFile(expectedVersionFilePath)
+	if err != nil {
+		t.Fatalf("Can't read %s file. Error: %s", expectedVersionFilePath, err.Error())
+	}
+	version := string(versionBytes)
+
+	if version != targetRelease.Version {
+		t.Fatalf("Version doesn't match. Expected %s | Actual %s", targetRelease.Version, version)
+	}
+
 }

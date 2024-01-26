@@ -103,7 +103,7 @@ func (mng *vtManager) Install(release Release, outputDir string) error {
 
 	var backupedDir, backupErr = backupPreviousVersion(cleanedOutputDir)
 
-	err = mng.unzipper.Unzip(filePath, cleanedOutputDir, release.Version)
+	err = mng.unzipper.Unzip(filePath, cleanedOutputDir)
 	if err != nil {
 		return err
 	}

@@ -25,7 +25,7 @@ func TestUnzip(t *testing.T) {
 	unzipper := DefaultUnzipper{}
 
 	// Run
-	err := unzipper.Unzip(archivePath, outputDir, "0.0.0")
+	err := unzipper.Unzip(archivePath, outputDir)
 	if err != nil {
 		t.Fatalf("Failed to unzip. Error: %s", err.Error())
 	}

@@ -10,12 +10,12 @@ import (
 )
 
 type Unzipper interface {
-	Unzip(filePath string, outputDir string, version string) error
+	Unzip(filePath string, outputDir string) error
 }
 
 type DefaultUnzipper struct{}
 
-func (u DefaultUnzipper) Unzip(filePath string, outputDir string, version string) error {
+func (u DefaultUnzipper) Unzip(filePath string, outputDir string) error {
 	log.Printf("[INFO] Extracting %s into %s \n", filePath, outputDir)
 
 	_, err := os.Open(outputDir)
