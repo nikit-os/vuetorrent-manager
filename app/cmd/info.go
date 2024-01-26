@@ -1,7 +1,8 @@
 package cmd
 
 import (
-	"log"
+	"fmt"
+	"log/slog"
 	"n1kit0s/vt-manager/app/vuetorrent"
 )
 
@@ -15,6 +16,6 @@ func (c *InfoCommand) Execute(args []string) error {
 		return err
 	}
 
-	log.Printf("[INFO] Vuetorrent version: %s\n", version)
+	slog.Info(fmt.Sprintf("Version: %s", version))
 	return nil
 }

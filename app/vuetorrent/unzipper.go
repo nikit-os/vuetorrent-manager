@@ -2,8 +2,9 @@ package vuetorrent
 
 import (
 	"archive/zip"
+	"fmt"
 	"io"
-	"log"
+	"log/slog"
 	"os"
 	"path/filepath"
 	"strings"
@@ -16,12 +17,12 @@ type Unzipper interface {
 type DefaultUnzipper struct{}
 
 func (u DefaultUnzipper) Unzip(filePath string, outputDir string) error {
-	log.Printf("[INFO] Extracting %s into %s \n", filePath, outputDir)
+	slog.Info(fmt.Sprintf("Extracting %s into %s", filePath, outputDir))
 
 	_, err := os.Open(outputDir)
 	if err != nil {
 		if os.IsNotExist(err) {
-			log.Printf("[INFO] Output direcrory %s doesn't exists. Creating...", outputDir)
+			slog.Info(fmt.Sprintf("Output direcrory %s doesn't exists. Creating...", outputDir))
 			os.MkdirAll(outputDir, os.ModePerm)
 		}
 	}

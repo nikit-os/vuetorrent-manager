@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"log"
 	"n1kit0s/vt-manager/app/github"
 	"n1kit0s/vt-manager/app/vuetorrent"
 )
@@ -13,7 +12,6 @@ type InstallCommand struct {
 }
 
 func (c *InstallCommand) Execute(args []string) error {
-	log.Println("[INFO] Start installing")
 	var githubClient = github.NewClient(c.GithubApiKey)
 	var vtManager = vuetorrent.NewVTManager(githubClient)
 

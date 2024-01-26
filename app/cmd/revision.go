@@ -1,7 +1,8 @@
 package cmd
 
 import (
-	"log"
+	"fmt"
+	"log/slog"
 )
 
 type RevisionCommand struct{}
@@ -9,6 +10,6 @@ type RevisionCommand struct{}
 var version string
 
 func (c *RevisionCommand) Execute(args []string) error {
-	log.Printf("[INFO] Revision: %s", version)
+	slog.Info(fmt.Sprintf("Revision: %s", version))
 	return nil
 }

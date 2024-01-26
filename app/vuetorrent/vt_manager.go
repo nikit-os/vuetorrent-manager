@@ -2,7 +2,7 @@ package vuetorrent
 
 import (
 	"fmt"
-	"log"
+	"log/slog"
 	"n1kit0s/vt-manager/app/github"
 	"os"
 	"path"
@@ -93,13 +93,13 @@ func (mng *vtManager) GetAllReleases() ([]Release, error) {
 }
 
 func (mng *vtManager) Install(release Release, outputDir string) error {
-	log.Printf("[INFO] Start downloading %v", release)
+	slog.Info("Start downloading", "release", release)
 	cleanedOutputDir := filepath.Clean(outputDir)
 	filePath, err := mng.downloader.Download(release, os.TempDir())
 	if err != nil {
 		return err
 	}
-	log.Printf("[INFO] Downloaded release into %s", filePath)
+	slog.Info("Downloaded release", "downloadPath", filePath)
 
 	var backupedDir, backupErr = backupPreviousVersion(cleanedOutputDir)
 
@@ -110,12 +110,12 @@ func (mng *vtManager) Install(release Release, outputDir string) error {
 
 	if backupErr == nil {
 		os.RemoveAll(backupedDir)
-		log.Printf("[INFO] Removed old dir %s", backupedDir)
+		slog.Info("Removed old dir", "dir", backupedDir)
 	}
 
 	err = createVersionFile(release.Version, cleanedOutputDir)
 	if err != nil {
-		log.Printf("[WARN] Can't create version file. Error: %s", err.Error())
+		slog.Warn("Can't create version file", "error", err.Error())
 	}
 
 	return nil
@@ -125,11 +125,11 @@ func createVersionFile(version string, outputDir string) error {
 	filePath := filepath.Join(filepath.Clean(outputDir), "version.txt")
 
 	if _, err := os.Stat(filePath); err == nil {
-		log.Printf("[INFO] %s already exists", filePath)
+		slog.Info("Version file already exists", "file", filePath)
 		return nil
 	}
 
-	log.Println("[INFO] Creating missed version.txt file")
+	slog.Info("Creating missed version.txt file")
 	versionData := []byte(version)
 	err := os.WriteFile(filePath, versionData, 0777)
 	if err != nil {
@@ -167,10 +167,10 @@ func backupPreviousVersion(outputDir string) (string, error) {
 	if err == nil {
 		previousVersion, err := GetVersion(outputDir)
 		if err != nil {
-			log.Printf("[WARN] Previous version is unknown. Err: %s", err.Error())
+			slog.Warn("Previous version is unknown", "error", err.Error())
 		}
 		backupedDir = fmt.Sprintf(outputDir + "-" + previousVersion)
-		log.Printf("[INFO] Renaming old output dir to %s", backupedDir)
+		slog.Info("Renaming old output directory", "renamedDir", backupedDir)
 		os.Rename(outputDir, backupedDir)
 	}
 

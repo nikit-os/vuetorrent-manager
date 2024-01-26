@@ -18,7 +18,6 @@ func TestUnzip(t *testing.T) {
 	}
 
 	archivePath := createZip(t, files)
-	t.Logf("Created archive [%s]", archivePath)
 
 	outputDir := filepath.Join(t.TempDir(), "test_out")
 

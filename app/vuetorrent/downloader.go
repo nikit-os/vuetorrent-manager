@@ -3,7 +3,7 @@ package vuetorrent
 import (
 	"fmt"
 	"io"
-	"log"
+	"log/slog"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -20,7 +20,7 @@ func (d HttpDownloader) Download(release Release, outputDir string) (filePath st
 	filePath = filepath.Join(outputDir, filename)
 
 	if _, err := os.Stat(filePath); err == nil {
-		log.Printf("[INFO] %s already exists here %s. skipping download", filename, filePath)
+		slog.Info(fmt.Sprintf("%s already exists here %s. skipping download", filename, filePath))
 		return filePath, nil
 	}
 

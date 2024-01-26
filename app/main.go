@@ -2,9 +2,11 @@ package main
 
 import (
 	"n1kit0s/vt-manager/app/cmd"
+	"os"
+
+	"log/slog"
 
 	"github.com/jessevdk/go-flags"
-	"log"
 )
 
 type Opts struct {
@@ -15,10 +17,10 @@ type Opts struct {
 }
 
 func main() {
-	log.Println("[INFO] Starting vt-manager")
 	var opts Opts
 	_, err := flags.Parse(&opts)
 	if err != nil {
-		log.Fatalf("[ERROR] %s", err.Error())
+		slog.Error(err.Error())
+		os.Exit(1)
 	}
 }
