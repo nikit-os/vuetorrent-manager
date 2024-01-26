@@ -7,7 +7,7 @@ import (
 )
 
 type ListCommand struct {
-	GithubApiKey string `short:"k" long:"api-key" required:"true" description:"Github API key"`
+	GithubApiKey string `short:"k" long:"api-key" required:"true" description:"Github API key" env:"GITHUB_API_KEY"`
 }
 
 func (c *ListCommand) Execute(args []string) error {
