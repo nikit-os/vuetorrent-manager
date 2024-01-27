@@ -10,11 +10,9 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        os: [darwin, linux]
+        os: [linux]
         arch: [amd64, arm64]
-        exclude:
-          - os: darwin
-            arch: amd64
+
     steps:
       - uses: actions/checkout@v3
 
@@ -29,9 +27,27 @@ jobs:
       - name: Build
         run: make TARGETOS=${{matrix.os}} TARGETARCH=${{matrix.arch}} VERSION=${{github.ref_name}} build
 
-      - name: Release 
+      - name: Upload to github release
         uses: AButler/upload-release-assets@v3.0
         with:
           files: "./bin/vt-manager-*"
           repo-token: ${{secrets.GITHUB_TOKEN}}
+
+      - name: Install buildx
+        id: buildx
+        uses: crazy-max/ghaction-docker-buildx@v1
+        with:
+          version: latest
+
+      - name: Login to docker hub
+        run: echo "${{ secrets.DOCKER_TOKEN }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+
+      - name: Build docker image
+        run: |
+          docker build \
+          --push \
+          --build-arg TARGETOS=${{matrix.os}} \
+          --build-arg TARGETARCH=${{matrix.arch}} \
+          --tag nikit0s/vuetorrent-manager:latest .
+
 

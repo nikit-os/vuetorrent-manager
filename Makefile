@@ -1,6 +1,6 @@
 VERSION = $(shell git describe --tags --always --dirty)
 TARGETOS = darwin
-TARGETARCH = amd64
+TARGETARCH = arm64
 
 .PHONY: run
 run:
