@@ -42,7 +42,7 @@ jobs:
           docker buildx build \
           --push \
           --platform linux/arm64,linux/amd64 \
-          --tag nikit0s/vuetorrent-manager:${{github.ref_name}}
+          --tag nikit0s/vuetorrent-manager:${{github.ref_name}} \
           --tag nikit0s/vuetorrent-manager:latest .
 
 
