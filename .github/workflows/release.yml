@@ -33,6 +33,23 @@ jobs:
           files: "./bin/vt-manager-*"
           repo-token: ${{secrets.GITHUB_TOKEN}}
 
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: binaries
+          path: ./bin/vt-manager-*
+
+  deploy-to-dockerhub:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: binaries
+          path: bin/
+
       - name: Install buildx
         id: buildx
         uses: crazy-max/ghaction-docker-buildx@v1
@@ -44,10 +61,10 @@ jobs:
 
       - name: Build docker image
         run: |
-          docker build \
+          docker build buildx \
           --push \
-          --build-arg TARGETOS=${{matrix.os}} \
-          --build-arg TARGETARCH=${{matrix.arch}} \
+          --platform linux/arm64,linux/amd64 \
+          --tag nikit0s/vuetorrent-manager:${{github.ref_name}}
           --tag nikit0s/vuetorrent-manager:latest .
 
 
