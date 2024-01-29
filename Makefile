@@ -13,4 +13,4 @@ test:
 .PHONY: build
 build:
 	@echo 'Building ...'
-	GOOS=${TARGETOS} GOARCH=${TARGETARCH} go build -v -ldflags="-s -w -X n1kit0s/vt-manager/app/cmd.version=${VERSION}" -o=./bin/vt-manager-${TARGETOS}-${TARGETARCH}_${VERSION} ./app
+	GOOS=${TARGETOS} GOARCH=${TARGETARCH} CGO_ENABLED=0 go build -v -ldflags="-s -w -X n1kit0s/vt-manager/app/cmd.version=${VERSION}" -o=./bin/vt-manager-${TARGETOS}-${TARGETARCH}_${VERSION} ./app
