@@ -48,13 +48,24 @@ To download specific version just add `--version=2.3.0` parameter
 
 ```sh
 # Clone this reposiotry and then...
-make build
+make TARGETOS=linux TARGETARCH=arm64 build
 
 # In the `bin/` directory you should find binaries
-# tree bin 
-# bin
-# ├── linux_amd64
-# │   └── vt-manager-amd64
-# └── vt-manager
+# $ tree ./bin
+#   ./bin
+#   ├── vt-manager-linux-amd64_0.2-1-g4c73788-dirty
+#   └── vt-manager-linux-arm64_0.2-1-g4c73788-dirty
 ```
 
+## Use docker container
+
+Create `.env file` with content
+
+```
+GITHUB_API_KEY=<github_key_12345...>
+VUETORRENT_DIRECTORY=/vuetorrent
+```
+
+```sh
+docker run --env-file=/home/qbtuser/vt-manager/.env -v /home/qbtuser/vuetorrent:/vuetorrent nikit0s/vuetorrent-manager:latest install
+```
