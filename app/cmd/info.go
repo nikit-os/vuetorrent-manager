@@ -11,7 +11,7 @@ type InfoCommand struct {
 }
 
 func (c *InfoCommand) Execute(args []string) error {
-	version, err := vuetorrent.GetVersion(c.Directory)
+	version, err := vuetorrent.GetInstalledVersion(c.Directory)
 	if err != nil {
 		return err
 	}

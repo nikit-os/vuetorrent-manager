@@ -19,7 +19,8 @@ type VTManager interface {
 	GetLatestRelease() (Release, error)
 	GetReleaseByTag(tag string) (Release, error)
 	GetAllReleases() ([]Release, error)
-	Install(release Release, outputDir string) error
+	GetReleaseForVersion(version string) (Release, error)
+	Install(version string, outputDir string) error
 }
 
 type vtManager struct {
@@ -92,7 +93,21 @@ func (mng *vtManager) GetAllReleases() ([]Release, error) {
 	return vtReleases, nil
 }
 
-func (mng *vtManager) Install(release Release, outputDir string) error {
+func (mng *vtManager) Install(targetVersion string, outputDir string) error {
+	release, err := mng.GetReleaseForVersion(targetVersion)
+	if err != nil {
+		return err
+	}
+
+	installedVersion, _ := GetInstalledVersion(outputDir)
+
+	slog.Info(fmt.Sprintf("Installed version: %s. Target version: %s", installedVersion, release.Version))
+
+	if installedVersion == release.Version {
+		slog.Info(fmt.Sprintf("Version %s already installed. Abort installation", release.Version))
+		return nil
+	}
+
 	slog.Info("Start downloading", "release", release)
 	cleanedOutputDir := filepath.Clean(outputDir)
 	filePath, err := mng.downloader.Download(release, os.TempDir())
@@ -121,6 +136,27 @@ func (mng *vtManager) Install(release Release, outputDir string) error {
 	return nil
 }
 
+func (mng *vtManager) GetReleaseForVersion(version string) (Release, error) {
+	var vtRelease Release
+
+	if version == "" {
+		release, err := mng.GetLatestRelease()
+		if err != nil {
+			return Release{}, err
+		}
+		vtRelease = release
+	} else {
+		tag := MakeTagName(version)
+		release, err := mng.GetReleaseByTag(tag)
+		if err != nil {
+			return Release{}, err
+		}
+		vtRelease = release
+	}
+
+	return vtRelease, nil
+}
+
 func createVersionFile(version string, outputDir string) error {
 	filePath := filepath.Join(filepath.Clean(outputDir), "version.txt")
 
@@ -146,7 +182,7 @@ func MakeTagName(version string) string {
 	}
 }
 
-func GetVersion(vtDirectory string) (string, error) {
+func GetInstalledVersion(vtDirectory string) (string, error) {
 	var versionFilePath = path.Join(vtDirectory, "version.txt")
 	_, err := os.Stat(versionFilePath)
 	if err != nil {
@@ -165,7 +201,7 @@ func backupPreviousVersion(outputDir string) (string, error) {
 	_, err := os.Stat(outputDir)
 	var backupedDir = ""
 	if err == nil {
-		previousVersion, err := GetVersion(outputDir)
+		previousVersion, err := GetInstalledVersion(outputDir)
 		if err != nil {
 			slog.Warn("Previous version is unknown", "error", err.Error())
 		}

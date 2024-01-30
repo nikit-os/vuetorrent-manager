@@ -15,23 +15,7 @@ func (c *InstallCommand) Execute(args []string) error {
 	var githubClient = github.NewClient(c.GithubApiKey)
 	var vtManager = vuetorrent.NewVTManager(githubClient)
 
-	var vtRelease vuetorrent.Release
-	if c.Version == "" {
-		release, err := vtManager.GetLatestRelease()
-		if err != nil {
-			return err
-		}
-		vtRelease = release
-	} else {
-		tag := vuetorrent.MakeTagName(c.Version)
-		release, err := vtManager.GetReleaseByTag(tag)
-		if err != nil {
-			return err
-		}
-		vtRelease = release
-	}
-
-	err := vtManager.Install(vtRelease, c.Directory)
+	err := vtManager.Install(c.Version, c.Directory)
 	if err != nil {
 		return err
 	}
