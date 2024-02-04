@@ -20,10 +20,10 @@ func (u DefaultUnzipper) Unzip(filePath string, outputDir string) error {
 	slog.Info(fmt.Sprintf("Extracting %s into %s", filePath, outputDir))
 
 	_, err := os.Open(outputDir)
-	if err != nil {
-		if os.IsNotExist(err) {
-			slog.Info(fmt.Sprintf("Output direcrory %s doesn't exists. Creating...", outputDir))
-			os.MkdirAll(outputDir, os.ModePerm)
+	if err != nil && os.IsNotExist(err) {
+		slog.Info(fmt.Sprintf("Output direcrory %s doesn't exists. Creating...", outputDir))
+		if err := os.MkdirAll(outputDir, os.ModePerm); err != nil {
+			return err
 		}
 	}
 
@@ -42,7 +42,9 @@ func (u DefaultUnzipper) Unzip(filePath string, outputDir string) error {
 		filePath = filepath.Join(filepath.Clean(outputDir), fileName)
 
 		if file.FileInfo().IsDir() {
-			os.MkdirAll(filePath, os.ModePerm)
+			if err := os.MkdirAll(filePath, os.ModePerm); err != nil {
+				return err
+			}
 			continue
 		}
 

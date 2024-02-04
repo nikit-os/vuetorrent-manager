@@ -207,7 +207,9 @@ func backupPreviousVersion(outputDir string) (string, error) {
 		}
 		backupedDir = fmt.Sprintf(outputDir + "-" + previousVersion)
 		slog.Info("Renaming old output directory", "renamedDir", backupedDir)
-		os.Rename(outputDir, backupedDir)
+		if err := os.Rename(outputDir, backupedDir); err != nil {
+			return backupedDir, err
+		}
 	}
 
 	return backupedDir, err
